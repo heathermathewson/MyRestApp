@@ -57,31 +57,42 @@ NSString *SERVER_API_BASE_URL = @"http://localhost:5000";
 }
 
 #pragma mark CHALLENGE #1 - let's do this together with a projector
-- (void)registerNewUsername:(NSString *)username withPassword:(NSString *)password completion:(void (^)(NSString *))completion failure:(void (^)(void))failure {
-    
+    //method call for registering a new user with all that needs to be done in it
+- (void)registerNewUsername:(NSString *)username withPassword:(NSString *)password completion:(void (^)(NSString *))completion failure:(void (^)(void))failure
+{
+    //beginning to talk to server: like picking up the phone
     NSURLSession *urlSession = [NSURLSession sharedSession];
     //make a request object (NSMutableURLRequest)
+    //next step: like looking up the number to use
     
     NSURL *url = [NSURL URLWithString:@"http://104.236.231.254:5000/user"];
-                         
+    
+    //making the call: dialing the number
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     
     //populate the request with the info from documentation
+    //first step for giving information:introduction
     request.HTTPMethod = @"POST";
     //create dictionary
+    //why you called/what you are planning on doing while talking
     NSMutableDictionary *userDataDictionary = [[NSMutableDictionary alloc]init];
+    //the items in the dictionary
     [userDataDictionary setObject:username forKey:@"username"];
     [userDataDictionary setObject:password forKey:@"password"];
     //setHeader or Body
+    
+    //declaring an error so we can use it
     NSError *error;
+    
+    //final packaging before sending, if not done correctly then error
     NSData *dataToPass = [NSJSONSerialization dataWithJSONObject:userDataDictionary options:0 error:&error];
-   
+   //put the basket into the car/put the data into the http body
     request.HTTPBody = dataToPass;
     
-    //tell server what type of info to expect
+    //tell server what type of info to expect//talk to me in the application/json"language", say it explicitly in "content-type"
     [request addValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     
-    //actually pass info to server
+    //actually pass info to server//everything is ready to go//dataTaskWithRequest sends request to server
      NSURLSessionDataTask *dataTask = [urlSession dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         //did my server call work?
          if (error)
@@ -93,9 +104,10 @@ NSString *SERVER_API_BASE_URL = @"http://localhost:5000";
          {
              NSLog(@"connected %ld",(long)((NSHTTPURLResponse *)response).statusCode);
              if (((NSHTTPURLResponse *)response).statusCode == 200)
-             {
-                 NSString *authToken = [[NSString alloc]initWithData:data encoding: NSUTF8StringEncoding];
-                 completion(authToken);
+             {//data is the binary, the encoding is UTF-8 String
+                 NSString *createdAuthToken = [[NSString alloc]initWithData:data encoding: NSUTF8StringEncoding];
+                 self.authToken = createdAuthToken;
+                 completion(createdAuthToken);
              }
              else
              {
@@ -104,18 +116,86 @@ NSString *SERVER_API_BASE_URL = @"http://localhost:5000";
          }
          NSLog(@"hi");
     }];
+    //now go
     [dataTask resume];
     
 }
 
 #pragma mark CHALLENGE #2 - with a partner
-- (void)authenticateUser:(NSString *)username withPassword:(NSString *)password completion:(void (^)(NSString *))completion failure:(void (^)(void))failure {
+- (void)authenticateUser:(NSString *)username withPassword:(NSString *)password completion:(void (^)(NSString *))completion failure:(void (^)(void))failure
+{
+    NSURLSession *urlSession = [NSURLSession sharedSession];
+
+    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"http://104.236.231.254:5000/auth?username=%@&password=%@",username, password]];
+
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+
+    request.HTTPMethod = @"POST";
+
+    [request addValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    
+    NSURLSessionDataTask *dataTask = [urlSession dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        if (error)
+        {
+            NSLog(@"error %ld", (long)((NSHTTPURLResponse *)response).statusCode);
+            failure();
+        }
+        else
+        {
+            NSLog(@"connected success %ld",(long)((NSHTTPURLResponse *)response).statusCode);
+            if (((NSHTTPURLResponse *)response).statusCode == 200)
+            {
+                NSString *createdAuthToken = [[NSString alloc]initWithData:data encoding: NSUTF8StringEncoding];
+                self.authToken = createdAuthToken;
+                completion(createdAuthToken);
+            }
+            else
+            {
+                failure();
+            }
+        }
+        NSLog(@"hello");
+    }];
+    [dataTask resume];
     
 }
 
 #pragma mark CHALLENGE #3 - with a partner or on your own
-- (void)fetchAllUserDataWithCompletion:(void (^)(NSArray<User *> *))completion failure:(void (^)(void))failure {
+- (void)fetchAllUserDataWithCompletion:(void (^)(NSArray<User *> *))completion failure:(void (^)(void))failure
+{
+    NSURLSession *urlSession = [NSURLSession sharedSession];
     
+    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"http://104.236.231.254:5000/user?auth=%@", self.authToken]];
+    
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    
+    request.HTTPMethod = @"GET";
+    
+    NSURLSessionDataTask *dataTask = [urlSession dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        if (error)
+        {
+            NSLog(@"error %ld", (long)((NSHTTPURLResponse *)response).statusCode);
+            failure();
+        }
+        else
+        {
+            NSLog(@"all is fetched %ld",(long)((NSHTTPURLResponse *)response).statusCode);
+            if (((NSHTTPURLResponse *)response).statusCode == 200)
+            {
+                NSString *createdAuthToken = [[NSString alloc]initWithData:data encoding: NSUTF8StringEncoding];
+                self.authToken = createdAuthToken;
+                completion([User usersFromData:data]);
+            }
+            else
+            {
+                failure();
+            }
+        }
+        NSLog(@"hello again");
+    }];
+    [dataTask resume];
+    
+ 
 }
 
 #pragma mark CHALLENGE #4 - with a partner or on your own
