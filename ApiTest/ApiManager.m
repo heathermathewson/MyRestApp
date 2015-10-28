@@ -59,6 +59,53 @@ NSString *SERVER_API_BASE_URL = @"http://localhost:5000";
 #pragma mark CHALLENGE #1 - let's do this together with a projector
 - (void)registerNewUsername:(NSString *)username withPassword:(NSString *)password completion:(void (^)(NSString *))completion failure:(void (^)(void))failure {
     
+    NSURLSession *urlSession = [NSURLSession sharedSession];
+    //make a request object (NSMutableURLRequest)
+    
+    NSURL *url = [NSURL URLWithString:@"http://104.236.231.254:5000/user"];
+                         
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    
+    //populate the request with the info from documentation
+    request.HTTPMethod = @"POST";
+    //create dictionary
+    NSMutableDictionary *userDataDictionary = [[NSMutableDictionary alloc]init];
+    [userDataDictionary setObject:username forKey:@"username"];
+    [userDataDictionary setObject:password forKey:@"password"];
+    //setHeader or Body
+    NSError *error;
+    NSData *dataToPass = [NSJSONSerialization dataWithJSONObject:userDataDictionary options:0 error:&error];
+   
+    request.HTTPBody = dataToPass;
+    
+    //tell server what type of info to expect
+    [request addValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    
+    //actually pass info to server
+     NSURLSessionDataTask *dataTask = [urlSession dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        //did my server call work?
+         if (error)
+         {
+             NSLog(@"error %ld", (long)((NSHTTPURLResponse *)response).statusCode);
+             failure();
+         }
+         else
+         {
+             NSLog(@"connected %ld",(long)((NSHTTPURLResponse *)response).statusCode);
+             if (((NSHTTPURLResponse *)response).statusCode == 200)
+             {
+                 NSString *authToken = [[NSString alloc]initWithData:data encoding: NSUTF8StringEncoding];
+                 completion(authToken);
+             }
+             else
+             {
+                 failure();
+             }
+         }
+         NSLog(@"hi");
+    }];
+    [dataTask resume];
+    
 }
 
 #pragma mark CHALLENGE #2 - with a partner
