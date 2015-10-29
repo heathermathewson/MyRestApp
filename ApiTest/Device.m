@@ -35,9 +35,11 @@
 
 +(Device *)currentDeviceInfo {
 
+//    Device *ser = [[Device alloc]initWithType:<#(NSString *)#> withIosVersion:<#(NSString *)#> withLanguage:<#(NSString *)#> withAppVersion:<#(NSString *)#>]
+    Device *newDevice = [[Device alloc]initWithType: @"device" withIosVersion:@"ios" withLanguage:@"language" withAppVersion:@"appsappsapps"];
     NSLog(@"Does anybody want to implement Device.currentDeviceInfo?");
     
-    return nil;
+    return newDevice;
 }
 
 @end

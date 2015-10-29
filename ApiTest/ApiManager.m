@@ -131,7 +131,7 @@ NSString *SERVER_API_BASE_URL = @"http://localhost:5000";
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
 
     request.HTTPMethod = @"POST";
-
+    
     [request addValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     
     NSURLSessionDataTask *dataTask = [urlSession dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
@@ -199,7 +199,51 @@ NSString *SERVER_API_BASE_URL = @"http://localhost:5000";
 }
 
 #pragma mark CHALLENGE #4 - with a partner or on your own
--(void)saveDevice:(Device *)device forUser:(User *)user completion:(void (^)(void))completion failure:(void (^)(void))failure {
+-(void)saveDevice:(Device *)device forUser:(User *)user completion:(void (^)(void))completion failure:(void (^)(void))failure
+{    NSURLSession *urlSession = [NSURLSession sharedSession];
+    
+    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"http://104.236.231.254:5000/device?auth=%@",self.authToken]];
+    
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    
+    request.HTTPMethod = @"POST";
+    
+    NSError *error;
+    
+    NSMutableDictionary *deviceDictionary = [[NSMutableDictionary alloc]init];
+    [deviceDictionary setObject:device.deviceType forKey:@"device_type"];
+    [deviceDictionary setObject:device.deviceType forKey:@"ios_version"];
+    [deviceDictionary setObject:device.deviceType forKey:@"language"];
+    [deviceDictionary setObject:device.deviceType forKey:@"app_version"];
+    
+    NSData *dataOfDeviceToPass = [NSJSONSerialization dataWithJSONObject:deviceDictionary options:0 error:&error];
+    request.HTTPBody = dataOfDeviceToPass;
+
+    [request addValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    
+    NSURLSessionDataTask *dataTask = [urlSession dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        if (error)
+        {
+            NSLog(@"error %ld", (long)((NSHTTPURLResponse *)response).statusCode);
+            failure();
+        }
+        else
+        {
+            NSLog(@"connected success %ld",(long)((NSHTTPURLResponse *)response).statusCode);
+            if (((NSHTTPURLResponse *)response).statusCode == 200)
+            {
+//                NSString *createdAuthToken = [[NSString alloc]initWithData:data encoding: NSUTF8StringEncoding];
+//                self.authToken = createdAuthToken;
+//                completion([User usersFromData:data]);
+            }
+            else
+            {
+                failure();
+            }
+        }
+        NSLog(@"hello");
+    }];
+    [dataTask resume];
 
 }
 
